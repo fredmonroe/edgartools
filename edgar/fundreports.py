@@ -17,11 +17,7 @@ from edgar.reference import cusip_ticker_mapping
 from edgar.richtools import repr_rich, df_to_rich_table
 from edgar.xmltools import find_element, child_text, optional_decimal
 
-__all__ = [
-    "FundReport",
-    "CurrentMetric",
-    "NPORT_FORMS"
-]
+__all__ = ["FundReport", "CurrentMetric", "NPORT_FORMS"]
 
 NPORT_FORMS: List[str] = ["NPORT-P", "NPORT-EX"]
 
@@ -36,11 +32,9 @@ class SeriesClassInfo(BaseModel):
     class_id: str
 
     @classmethod
-    def from_xml(cls,
-                 tag):
+    def from_xml(cls, tag):
         if tag and tag.name == "seriesClassInfo":
-            return cls(series_id=child_text(tag, "seriesId"),
-                       class_id=child_text(tag, "classId"))
+            return cls(series_id=child_text(tag, "seriesId"), class_id=child_text(tag, "classId"))
 
 
 class FilerInfo(BaseModel):
@@ -92,15 +86,15 @@ class PeriodType(BaseModel):
     period30Yr: Decimal
 
     @classmethod
-    def from_xml(cls,
-                 tag: Tag = None):
+    def from_xml(cls, tag: Tag = None):
         if tag:
-            return cls(period1Yr=Decimal(tag.attrs.get("period1Yr")),
-                       period3Mon=Decimal(tag.attrs.get("period3Mon")),
-                       period5Yr=Decimal(tag.attrs.get("period5Yr")),
-                       period10Yr=Decimal(tag.attrs.get("period10Yr")),
-                       period30Yr=Decimal(tag.attrs.get("period30Yr"))
-                       )
+            return cls(
+                period1Yr=Decimal(tag.attrs.get("period1Yr")),
+                period3Mon=Decimal(tag.attrs.get("period3Mon")),
+                period5Yr=Decimal(tag.attrs.get("period5Yr")),
+                period10Yr=Decimal(tag.attrs.get("period10Yr")),
+                period30Yr=Decimal(tag.attrs.get("period30Yr")),
+            )
 
 
 class CurrentMetric(BaseModel):
@@ -137,7 +131,7 @@ class MonthlyTotalReturn(BaseModel):
             class_id=tag.attrs.get("classId"),
             return1=decimal_or_na(tag.attrs.get("rtn1")),
             return2=decimal_or_na(tag.attrs.get("rtn2")),
-            return3=decimal_or_na(tag.attrs.get("rtn3"))
+            return3=decimal_or_na(tag.attrs.get("rtn3")),
         )
 
 
@@ -146,12 +140,11 @@ class RealizedChange(BaseModel):
     net_unrealized_appreciation: Optional[Union[Decimal, str]]
 
     @classmethod
-    def from_xml(cls,
-                 tag):
+    def from_xml(cls, tag):
         if tag:
             return cls(
                 net_realized_gain=decimal_or_na(tag.attrs.get("netRealizedGain")),
-                net_unrealized_appreciation=decimal_or_na(tag.attrs.get("netUnrealizedAppr"))
+                net_unrealized_appreciation=decimal_or_na(tag.attrs.get("netUnrealizedAppr")),
             )
 
 
@@ -161,13 +154,12 @@ class MonthlyFlow(BaseModel):
     sales: Optional[Union[Decimal, str]]
 
     @classmethod
-    def from_xml(cls,
-                 tag):
+    def from_xml(cls, tag):
         if tag:
             return cls(
                 redemption=decimal_or_na(tag.attrs.get("redemption")),
                 reinvestment=decimal_or_na(tag.attrs.get("reinvestment")),
-                sales=decimal_or_na(tag.attrs.get("sales"))
+                sales=decimal_or_na(tag.attrs.get("sales")),
             )
 
 
@@ -217,8 +209,7 @@ class DebtSecurity(BaseModel):
     is_continuing_convertible: bool
 
     @classmethod
-    def from_xml(cls,
-                 tag: Tag):
+    def from_xml(cls, tag: Tag):
         if tag and tag.name == "debtSec":
             return cls(
                 maturity_date=datetime_or_na(child_text(tag, "maturityDt")),
@@ -228,7 +219,7 @@ class DebtSecurity(BaseModel):
                 are_instrument_payents_in_arrears=child_text(tag, "areIntrstPmntsInArrs") == "Y",
                 is_paid_kind=child_text(tag, "isPaidKind") == "Y",
                 is_mandatory_convertible=child_text(tag, "isMandatoryConvrtbl") == "Y",
-                is_continuing_convertible=child_text(tag, "isContngtConvrtbl") == "Y"
+                is_continuing_convertible=child_text(tag, "isContngtConvrtbl") == "Y",
             )
 
 
@@ -243,7 +234,7 @@ class SecurityLending(BaseModel):
             return cls(
                 is_cash_collateral=child_text(tag, "isCashCollateral"),
                 is_non_cash_collateral=child_text(tag, "isNonCashCollateral"),
-                is_loan_by_fund=child_text(tag, "isLoanByFund")
+                is_loan_by_fund=child_text(tag, "isLoanByFund"),
             )
 
 
@@ -253,8 +244,7 @@ class Identifiers(BaseModel):
     other: Dict
 
     @classmethod
-    def from_xml(cls,
-                 tag):
+    def from_xml(cls, tag):
         if tag and tag.name == "identifiers":
             ticker_tag = tag.find("ticker")
             ticker = ticker_tag.attrs.get("value") if ticker_tag else None
@@ -303,12 +293,14 @@ class FundReport:
     Form N-PORT-P is a form filed with the SEC by mutual funds to report their monthly portfolio holdings to the SEC.
     """
 
-    def __init__(self,
-                 header: Header,
-                 general_info: GeneralInfo,
-                 fund_info: FundInfo,
-                 investments: List[InvestmentOrSecurity],
-                 series_and_contracts: FundSeriesAndContracts = None):
+    def __init__(
+        self,
+        header: Header,
+        general_info: GeneralInfo,
+        fund_info: FundInfo,
+        investments: List[InvestmentOrSecurity],
+        series_and_contracts: FundSeriesAndContracts = None,
+    ):
         self.header = header
         self.general_info: GeneralInfo = general_info
         self.fund_info: FundInfo = fund_info
@@ -316,8 +308,7 @@ class FundReport:
         self.series_and_contracts: FundSeriesAndContracts = series_and_contracts
 
     def __str__(self):
-        return (f"{self.name} {self.general_info.rep_period_date} - {self.general_info.fiscal_year_end}"
-                )
+        return f"{self.name} {self.general_info.rep_period_date} - {self.general_info.fiscal_year_end}"
 
     @property
     def name(self):
@@ -338,47 +329,44 @@ class FundReport:
         :return: The investments as a pandas dataframe
         """
         if len(self.investments) == 0:
-            return pd.DataFrame(columns=['name', 'title', 'cusip', 'ticker', 'balance', 'units'])
+            return pd.DataFrame(columns=["name", "title", "cusip", "ticker", "balance", "units"])
 
-        # This is for adding Ticker to the investments in case it is None
+        investment_df = (
+            pd.DataFrame(
+                [
+                    {
+                        "name": investment.name,
+                        "title": investment.title,
+                        "lei": investment.lei,
+                        "cusip": investment.cusip,
+                        "ticker": investment.identifiers.ticker,
+                        "isin": investment.identifiers.isin,
+                        "balance": investment.balance,
+                        "units": investment.units,
+                        "desc_other_units": investment.desc_other_units,
+                        "value_usd": investment.value_usd,
+                        "pct_value": investment.pct_value,
+                        "payoff_profile": investment.payoff_profile,
+                        "asset_category": investment.asset_category,
+                        "issuer_category": investment.issuer_category,
+                        "currency_code": investment.currency_code,
+                        "investment_country": investment.investment_country,
+                        "restricted": investment.is_restricted_security,
+                        "maturity_date": investment.debt_security.maturity_date if investment.debt_security else pd.NA,
+                        "annualized_rate": investment.debt_security.annualized_rate if investment.debt_security else pd.NA,
+                        "is_default": investment.debt_security.is_default if investment.debt_security else pd.NA,
+                        "cash_collateral": investment.security_lending.is_cash_collateral if investment.security_lending else pd.NA,
+                        "non_cash_collateral": investment.security_lending.is_non_cash_collateral if investment.security_lending else pd.NA,
+                    }
+                    for investment in self.investments
+                ]
+            )
+            .sort_values(["value_usd", "name", "title"], ascending=[False, True, True])
+            .reset_index(drop=True)
+        )
+
         cusip_mapping = cusip_ticker_mapping(allow_duplicate_cusips=False)
-
-        investment_df = pd.DataFrame(
-            [{
-                "name": investment.name,
-                "title": investment.title,
-                "lei": investment.lei,
-                "cusip": investment.cusip,
-                "ticker": investment.identifiers.ticker,
-                "isin": investment.identifiers.isin,
-                "balance": investment.balance,
-                "units": investment.units,
-                "desc_other_units": investment.desc_other_units,
-                "value_usd": investment.value_usd,
-                "pct_value": investment.pct_value,
-                "payoff_profile": investment.payoff_profile,
-                "asset_category": investment.asset_category,
-                "issuer_category": investment.issuer_category,
-                "currency_code": investment.currency_code,
-                "investment_country": investment.investment_country,
-                "restricted": investment.is_restricted_security,
-                "maturity_date": investment.debt_security.maturity_date if investment.debt_security else pd.NA,
-                "annualized_rate": investment.debt_security.annualized_rate if investment.debt_security else pd.NA,
-                "is_default": investment.debt_security.is_default if investment.debt_security else pd.NA,
-                "cash_collateral": investment.security_lending.is_cash_collateral
-                if investment.security_lending else pd.NA,
-                "non_cash_collateral": investment.security_lending.is_non_cash_collateral
-                if investment.security_lending else pd.NA
-            }
-                for investment in self.investments
-            ]
-        ).sort_values(['value_usd', 'name', 'title'], ascending=[False, True, True]).reset_index(drop=True)
-
-        # Step 1: Map CUSIP to Ticker using the cusip_mapping
-        mapped_tickers = investment_df.cusip.map(cusip_mapping.Ticker)
-
-        # Step 2: Fill NaN values in the ticker column with mapped tickers
-        investment_df['ticker'] = investment_df['ticker'].astype(str).fillna(mapped_tickers).fillna("")
+        investment_df["ticker"] = investment_df.cusip.map(cusip_mapping.Ticker)
 
         return investment_df
 
@@ -387,12 +375,11 @@ class FundReport:
         xml = filing.xml()
         fund_report_dict = FundReport.parse_fund_xml(xml)
         # Parse ticker, fund, series information from the filing header
-        fund_report_dict['series_and_contracts'] = get_fund_information(filing.header)
+        fund_report_dict["series_and_contracts"] = get_fund_information(filing.header)
         return cls(**fund_report_dict)
 
     @classmethod
-    def parse_fund_xml(cls,
-                       xml: Union[str, Tag]) -> Dict[str, Any]:
+    def parse_fund_xml(cls, xml: Union[str, Tag]) -> Dict[str, Any]:
         root = find_element(xml, "edgarSubmission")
 
         # Get the header
@@ -407,12 +394,9 @@ class FundReport:
             submission_type=child_text(header_el, "submissionType"),
             is_confidential=child_text(header_el, "isConfidential") == "true",
             filer_info=FilerInfo(
-                issuer_credentials=IssuerCredentials(
-                    cik=child_text(issuer_credentials_tag, "cik"),
-                    ccc=child_text(issuer_credentials_tag, "ccc")
-                ),
-                series_class_info=SeriesClassInfo.from_xml(filer_info_tag.find("seriesClassInfo"))
-            )
+                issuer_credentials=IssuerCredentials(cik=child_text(issuer_credentials_tag, "cik"), ccc=child_text(issuer_credentials_tag, "ccc")),
+                series_class_info=SeriesClassInfo.from_xml(filer_info_tag.find("seriesClassInfo")),
+            ),
         )
 
         # Form data
@@ -445,7 +429,7 @@ class FundReport:
             series_lei=child_text(general_info_tag, "seriesLei"),
             fiscal_year_end=child_text(general_info_tag, "repPdEnd"),
             rep_period_date=child_text(general_info_tag, "repPdDate"),
-            is_final_filing=get_bool(child_text(general_info_tag, "isFinalFiling"))
+            is_final_filing=get_bool(child_text(general_info_tag, "isFinalFiling")),
         )
 
         # Fund info
@@ -459,7 +443,7 @@ class FundReport:
                 current_metrics[currency] = CurrentMetric(
                     currency=currency,
                     intrstRtRiskdv01=PeriodType.from_xml(curr_metric_tag.find("intrstRtRiskdv01")),
-                    intrstRtRiskdv100=PeriodType.from_xml(curr_metric_tag.find("intrstRtRiskdv100"))
+                    intrstRtRiskdv100=PeriodType.from_xml(curr_metric_tag.find("intrstRtRiskdv100")),
                 )
 
         # Return Info
@@ -467,13 +451,11 @@ class FundReport:
         monthly_returns_tag = return_info_tag.find("monthlyTotReturns")
         return_info: ReturnInfo = ReturnInfo(
             monthly_total_returns=[
-                MonthlyTotalReturn.from_xml(monthly_return_tag)
-                for monthly_return_tag
-                in monthly_returns_tag.find_all("monthlyTotReturn")
+                MonthlyTotalReturn.from_xml(monthly_return_tag) for monthly_return_tag in monthly_returns_tag.find_all("monthlyTotReturn")
             ],
             other_mon1=RealizedChange.from_xml(return_info_tag.find("othMon1")),
             other_mon2=RealizedChange.from_xml(return_info_tag.find("othMon2")),
-            other_mon3=RealizedChange.from_xml(return_info_tag.find("othMon3"))
+            other_mon3=RealizedChange.from_xml(return_info_tag.find("othMon3")),
         )
 
         fund_info = FundInfo(
@@ -496,13 +478,12 @@ class FundReport:
             cash_not_report_in_cor_d=optional_decimal(fund_info_tag, "cshNotRptdInCorD"),
             current_metrics=current_metrics,
             credit_spread_risk_investment_grade=PeriodType.from_xml(fund_info_tag.find("creditSprdRiskInvstGrade")),
-            credit_spread_risk_non_investment_grade=PeriodType.from_xml(
-                fund_info_tag.find("creditSprdRiskNonInvstGrade")),
+            credit_spread_risk_non_investment_grade=PeriodType.from_xml(fund_info_tag.find("creditSprdRiskNonInvstGrade")),
             is_non_cash_collateral=child_text(fund_info_tag, "isNonCashCollateral") == "Y",
             return_info=return_info,
             monthly_flow1=MonthlyFlow.from_xml(fund_info_tag.find("mon1Flow")),
             monthly_flow2=MonthlyFlow.from_xml(fund_info_tag.find("mon2Flow")),
-            monthly_flow3=MonthlyFlow.from_xml(fund_info_tag.find("mon3Flow"))
+            monthly_flow3=MonthlyFlow.from_xml(fund_info_tag.find("mon3Flow")),
         )
 
         # Investments or securities
@@ -544,88 +525,112 @@ class FundReport:
                     is_restricted_security=child_text(investment_tag, "isRestrictedSec") == "Y",
                     fair_value_level=child_text(investment_tag, "fairValLevel"),
                     debt_security=DebtSecurity.from_xml(investment_tag.find("debtSec")),
-                    security_lending=SecurityLending.from_xml(investment_tag.find("securityLending"))
+                    security_lending=SecurityLending.from_xml(investment_tag.find("securityLending")),
                 )
 
                 investments_or_securities.append(investments_or_security)
 
         # Get the fund Information from the filing header
 
-        return {'header': header,
-                'general_info': general_info,
-                'fund_info': fund_info,
-                'investments': investments_or_securities}
+        return {"header": header, "general_info": general_info, "fund_info": fund_info, "investments": investments_or_securities}
 
     @property
     def fund_info_table(self) -> Table:
         fund_info_table = Table("Fund", "Series", "As Of Date", "Fiscal Year", box=box.SIMPLE)
-        fund_info_table.add_row(self.general_info.name,
-                                f"{self.general_info.series_name} {self.general_info.series_id or ''}",
-                                self.general_info.rep_period_date,
-                                self.general_info.fiscal_year_end)
+        fund_info_table.add_row(
+            self.general_info.name,
+            f"{self.general_info.series_name} {self.general_info.series_id or ''}",
+            self.general_info.rep_period_date,
+            self.general_info.fiscal_year_end,
+        )
         return fund_info_table
 
     @property
     def fund_summary_table(self) -> Table:
         # Financials
-        financials_table = Table("Assets",
-                                 "Liabilities",
-                                 "Net Assets",
-                                 "Investments",
-                                 title="Financials", title_style="bold deep_sky_blue1", box=box.SIMPLE)
-        financials_table.add_row(moneyfmt(self.fund_info.total_assets, curr="$", places=0),
-                                 moneyfmt(self.fund_info.total_liabilities, curr="$", places=0),
-                                 moneyfmt(self.fund_info.net_assets, curr="$", places=0),
-                                 f"{len(self.investments)}"
-                                 )
+        financials_table = Table(
+            "Assets", "Liabilities", "Net Assets", "Investments", title="Financials", title_style="bold deep_sky_blue1", box=box.SIMPLE
+        )
+        financials_table.add_row(
+            moneyfmt(self.fund_info.total_assets, curr="$", places=0),
+            moneyfmt(self.fund_info.total_liabilities, curr="$", places=0),
+            moneyfmt(self.fund_info.net_assets, curr="$", places=0),
+            f"{len(self.investments)}",
+        )
         return financials_table
 
     @property
     def metrics_table(self):
-        table = Table("Metric", "Currency", "3 month", "1 year", "5 year", "10 year", "30 year",
-                      title="Interest Rate Sensitivity", title_style="bold deep_sky_blue1", box=box.SIMPLE)
+        table = Table(
+            "Metric",
+            "Currency",
+            "3 month",
+            "1 year",
+            "5 year",
+            "10 year",
+            "30 year",
+            title="Interest Rate Sensitivity",
+            title_style="bold deep_sky_blue1",
+            box=box.SIMPLE,
+        )
 
         for currency, current_metric in self.fund_info.current_metrics.items():
-            table.add_row("Dollar Value 01",
-                          currency,
-                          moneyfmt(current_metric.intrstRtRiskdv01.period3Mon),
-                          moneyfmt(current_metric.intrstRtRiskdv01.period1Yr),
-                          moneyfmt(current_metric.intrstRtRiskdv01.period5Yr),
-                          moneyfmt(current_metric.intrstRtRiskdv01.period10Yr),
-                          moneyfmt(current_metric.intrstRtRiskdv01.period30Yr)
-                          )
-            table.add_row("Dollar Value 100",
-                          currency,
-                          moneyfmt(current_metric.intrstRtRiskdv100.period3Mon, ),
-                          moneyfmt(current_metric.intrstRtRiskdv100.period1Yr),
-                          moneyfmt(current_metric.intrstRtRiskdv100.period5Yr),
-                          moneyfmt(current_metric.intrstRtRiskdv100.period10Yr),
-                          moneyfmt(current_metric.intrstRtRiskdv100.period30Yr))
+            table.add_row(
+                "Dollar Value 01",
+                currency,
+                moneyfmt(current_metric.intrstRtRiskdv01.period3Mon),
+                moneyfmt(current_metric.intrstRtRiskdv01.period1Yr),
+                moneyfmt(current_metric.intrstRtRiskdv01.period5Yr),
+                moneyfmt(current_metric.intrstRtRiskdv01.period10Yr),
+                moneyfmt(current_metric.intrstRtRiskdv01.period30Yr),
+            )
+            table.add_row(
+                "Dollar Value 100",
+                currency,
+                moneyfmt(
+                    current_metric.intrstRtRiskdv100.period3Mon,
+                ),
+                moneyfmt(current_metric.intrstRtRiskdv100.period1Yr),
+                moneyfmt(current_metric.intrstRtRiskdv100.period5Yr),
+                moneyfmt(current_metric.intrstRtRiskdv100.period10Yr),
+                moneyfmt(current_metric.intrstRtRiskdv100.period30Yr),
+            )
 
         return table
 
     @property
     def credit_spread_table(self):
-        if not (
-                self.fund_info.credit_spread_risk_investment_grade or
-                self.fund_info.credit_spread_risk_non_investment_grade):
+        if not (self.fund_info.credit_spread_risk_investment_grade or self.fund_info.credit_spread_risk_non_investment_grade):
             return Text(" ")
-        table = Table("Metric", "3 month", "1 year", "5 year", "10 year", "30 year",
-                      title="Credit Spread Risk", title_style="bold deep_sky_blue1", box=box.SIMPLE)
+        table = Table(
+            "Metric",
+            "3 month",
+            "1 year",
+            "5 year",
+            "10 year",
+            "30 year",
+            title="Credit Spread Risk",
+            title_style="bold deep_sky_blue1",
+            box=box.SIMPLE,
+        )
         if self.fund_info.credit_spread_risk_investment_grade:
-            table.add_row("Investment Grade",
-                          moneyfmt(self.fund_info.credit_spread_risk_investment_grade.period3Mon),
-                          moneyfmt(self.fund_info.credit_spread_risk_investment_grade.period1Yr),
-                          moneyfmt(self.fund_info.credit_spread_risk_investment_grade.period5Yr),
-                          moneyfmt(self.fund_info.credit_spread_risk_investment_grade.period10Yr),
-                          moneyfmt(self.fund_info.credit_spread_risk_investment_grade.period30Yr))
+            table.add_row(
+                "Investment Grade",
+                moneyfmt(self.fund_info.credit_spread_risk_investment_grade.period3Mon),
+                moneyfmt(self.fund_info.credit_spread_risk_investment_grade.period1Yr),
+                moneyfmt(self.fund_info.credit_spread_risk_investment_grade.period5Yr),
+                moneyfmt(self.fund_info.credit_spread_risk_investment_grade.period10Yr),
+                moneyfmt(self.fund_info.credit_spread_risk_investment_grade.period30Yr),
+            )
         if self.fund_info.credit_spread_risk_non_investment_grade:
-            table.add_row("Non Investment Grade",
-                          moneyfmt(self.fund_info.credit_spread_risk_non_investment_grade.period3Mon),
-                          moneyfmt(self.fund_info.credit_spread_risk_non_investment_grade.period1Yr),
-                          moneyfmt(self.fund_info.credit_spread_risk_non_investment_grade.period5Yr),
-                          moneyfmt(self.fund_info.credit_spread_risk_non_investment_grade.period10Yr),
-                          moneyfmt(self.fund_info.credit_spread_risk_non_investment_grade.period30Yr))
+            table.add_row(
+                "Non Investment Grade",
+                moneyfmt(self.fund_info.credit_spread_risk_non_investment_grade.period3Mon),
+                moneyfmt(self.fund_info.credit_spread_risk_non_investment_grade.period1Yr),
+                moneyfmt(self.fund_info.credit_spread_risk_non_investment_grade.period5Yr),
+                moneyfmt(self.fund_info.credit_spread_risk_non_investment_grade.period10Yr),
+                moneyfmt(self.fund_info.credit_spread_risk_non_investment_grade.period30Yr),
+            )
         return table
 
     @property
@@ -633,25 +638,23 @@ class FundReport:
     def investments_table(self):
         investments = self.investment_data()
         if not investments.empty:
-            investments = (investments
-                           .assign(Name=lambda df: df.name,
-                                   Title=lambda df: df.title,
-                                   Cusip=lambda df: df.cusip,
-                                   Ticker=lambda df: df.ticker,
-                                   Value=lambda df: df.value_usd.apply(moneyfmt, curr='$', places=0),
-                                   Pct=lambda df: df.pct_value.apply(moneyfmt, curr='', places=1),
-                                   Category=lambda df: df.issuer_category + " " + df.asset_category)
-                           ).filter(['Name', 'Title', 'Cusip', 'Ticker', 'Category', 'Value', 'Pct'])
+            investments = (
+                investments.assign(
+                    Name=lambda df: df.name,
+                    Title=lambda df: df.title,
+                    Cusip=lambda df: df.cusip,
+                    Ticker=lambda df: df.ticker,
+                    Value=lambda df: df.value_usd.apply(moneyfmt, curr="$", places=0),
+                    Pct=lambda df: df.pct_value.apply(moneyfmt, curr="", places=1),
+                    Category=lambda df: df.issuer_category + " " + df.asset_category,
+                )
+            ).filter(["Name", "Title", "Cusip", "Ticker", "Category", "Value", "Pct"])
         return df_to_rich_table(investments, title="Investments", title_style="bold deep_sky_blue1", max_rows=2000)
 
     def __rich__(self):
         title = f"{self.general_info.name} - {self.general_info.series_name} {self.general_info.rep_period_date}"
-        return Panel(Group(
-            self.fund_summary_table,
-            self.metrics_table,
-            self.credit_spread_table,
-            self.investments_table
-        ), title=title, subtitle=title
+        return Panel(
+            Group(self.fund_summary_table, self.metrics_table, self.credit_spread_table, self.investments_table), title=title, subtitle=title
         )
 
     def __repr__(self):
